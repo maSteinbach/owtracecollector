@@ -1,0 +1,19 @@
+
+receivers:
+  examplereceiver:
+
+processors:
+  owtraceprocessor:
+
+exporters:
+  exampleexporter:
+
+service:
+  pipelines:
+    traces:
+      receivers:
+      - examplereceiver
+      processors:
+      - owtraceprocessor
+      exporters:
+      - exampleexporter
