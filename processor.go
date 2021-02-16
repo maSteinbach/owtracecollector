@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/apache/openwhisk-client-go/whisk"
 	"go.opentelemetry.io/collector/component"
@@ -15,6 +16,7 @@ import (
 var (
 	_ component.TracesProcessor = (*owTraceProcessor)(nil)
 	retries int = 2
+	sleep time.Duration = 5
 )
 
 type owTraceProcessor struct {
@@ -51,6 +53,7 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 					} else {
 						activation, res, err := client.Activations.Get(id.StringVal())
 						for err != nil && retries > 0 {
+							time.Sleep(sleep * time.Second)
 							activation, res, err = client.Activations.Get(id.StringVal())
 							retries--
 						}
