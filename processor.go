@@ -3,7 +3,7 @@ package owtraceprocessor
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/apache/openwhisk-client-go/whisk"
@@ -12,7 +12,10 @@ import (
 	"go.opentelemetry.io/collector/consumer/pdata"
 )
 
-var _ component.TracesProcessor = (*owTraceProcessor)(nil)
+var (
+	_ component.TracesProcessor = (*owTraceProcessor)(nil)
+	retries int = 2
+)
 
 type owTraceProcessor struct {
 	next consumer.TracesConsumer
@@ -31,7 +34,7 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 	}
 	client, err := whisk.NewClient(http.DefaultClient, config)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	} else {
 		// ResourceSpans[] -> InstrumentationLibrarySpans[] -> Spans[]
 		for i := 0; i < batch.ResourceSpans().Len(); i++ {
@@ -43,10 +46,13 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 				for k := 0; k < ils.Spans().Len(); k++ {
 					executionSpan := ils.Spans().At(k)
 					id, ok := executionSpan.Attributes().Get("activationId")
-					if ok {
-						activation, res, err := client.Activations.Get(id.StringVal()) // TODO: implement retry
-						if err != nil {
-							fmt.Println(res, err)
+					if !ok {
+						log.Println("activation id not found")
+					} else {
+						activation, res, err := client.Activations.Get(id.StringVal())
+						for err != nil && retries > 0 {
+							activation, res, err = client.Activations.Get(id.StringVal())
+							retries--
 						}
 						if res.StatusCode == http.StatusOK {
 							executionStart := activation.Start
@@ -105,7 +111,7 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 		}
 	}
 	if err := s.next.ConsumeTraces(ctx, batch); err != nil {
-		fmt.Println(err)
+		return err
 	}
 	return nil
 }
