@@ -1,0 +1,23 @@
+extensions:
+  health_check:
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: "localhost:55681"
+processors:
+  batch:
+    send_batch_size: 8192
+    timeout: 10s
+  owtraceprocessor:
+exporters:
+  zipkin:
+    endpoint: "http://zipkinot.default.svc.cluster.local:9411/api/v2/spans"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, owtraceprocessor]
+      exporters: [zipkin]
+  extensions: [health_check]
