@@ -11,20 +11,21 @@ This collector receives traces from OpenWhisk function executions and enriches t
 go build
 ```
 
-and add it to your PATH
-3. Create the binary of the collector with
+3. Add the binary to your your PATH
+
+4. Create the binary of the collector with
 
 ```bash
 opentelemetry-collector-builder --config builder.yaml
 ```
 
-4.
+5.
 
 ```bash
 cd owtracecollector-dist
 ```
 
-5. Start the collector with
+6. Start the collector with
 
 ```bash
 ./owtracecollector --config ../config.yaml  
