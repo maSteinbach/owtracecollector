@@ -1,0 +1,5 @@
+processors:
+  - gomod: "github.com/koelschkellerkind/owtraceprocessor v0.0.0"
+    name: "owtraceprocessor"
+    path: "/Users/markus/Documents/TUM/Thesis/owtracecollector"
+    
