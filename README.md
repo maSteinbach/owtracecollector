@@ -34,7 +34,7 @@ docker build -t koelschkellerkind/owtracecollector .
 6. Start the collector with
 
     ```bash
-    ./owtracecollector --config ../config.yaml  
+    ./owtracecollector --config ../otel-collector-config.yaml  
     ```
 
 ### Pitfalls
