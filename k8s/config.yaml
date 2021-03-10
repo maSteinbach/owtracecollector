@@ -32,7 +32,7 @@ data:
         traces:
           receivers: [otlp]
           processors: [batch, owtraceprocessor]
-          exporters: [zipkin]
+          exporters: [zipkin, logging]
       extensions: [health_check]
 ---
 apiVersion: v1
