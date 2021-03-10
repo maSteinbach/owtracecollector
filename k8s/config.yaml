@@ -45,9 +45,9 @@ metadata:
 spec:
   ports:
   - name: otlp # Default endpoint for OpenTelemetry receiver.
-    port: 55680
+    port: 55681
     protocol: TCP
-    targetPort: 55680
+    targetPort: 55681
   - name: metrics # Default endpoint for Prometheus metrics exposed by the collector.
     port: 8888
   selector:
@@ -89,7 +89,7 @@ spec:
             cpu: 200m
             memory: 400Mi
         ports:
-        - containerPort: 55680 # Default endpoint for OpenTelemetry receiver.
+        - containerPort: 55681 # Default endpoint for OpenTelemetry receiver.
         - containerPort: 8888  # Default endpoint for Prometheus metrics exposed by the collector.
         volumeMounts:
         - name: otel-collector-config-vol
