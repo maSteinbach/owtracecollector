@@ -50,6 +50,8 @@ spec:
     targetPort: 55681
   - name: metrics # Default endpoint for Prometheus metrics exposed by the collector.
     port: 8888
+    protocol: TCP
+    targetPort: 8888
   selector:
     component: owtracecollector
 ---
