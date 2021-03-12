@@ -40,3 +40,7 @@ docker build -t koelschkellerkind/owtracecollector .
 ### Pitfalls
 
 * Using tabs in the `builder.yaml` results in an error
+
+### TODO
+
+* Remove OpenWhisk config from `processor.go` line 32-36
