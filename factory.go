@@ -34,9 +34,9 @@ func createDefaultConfig() configmodels.Processor {
 
 func createTraceProcessor(
 	_ context.Context,
-	_ component.ProcessorCreateParams,
+	params component.ProcessorCreateParams,
 	_ configmodels.Processor,
 	nextConsumer consumer.TracesConsumer) (component.TracesProcessor, error) {
 
-	return newOwTraceProcessor(nextConsumer), nil
+	return newOwTraceProcessor(nextConsumer, params.Logger), nil
 }

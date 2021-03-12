@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/pdata"
+	"go.uber.org/zap"
 )
 
 // TODO: do not hardcode activation id
@@ -44,7 +46,8 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 
 	// test
 	next := &componenttest.ExampleExporterConsumer{}
-	processor := newOwTraceProcessor(next)
+	creationParams := component.ProcessorCreateParams{Logger: zap.NewNop()}
+	processor := newOwTraceProcessor(next, creationParams.Logger)
 	err := processor.ConsumeTraces(context.Background(), inBatch)
 
 	// verify
