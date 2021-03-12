@@ -42,11 +42,11 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 		for i := 0; i < batch.ResourceSpans().Len(); i++ {
 			rs := batch.ResourceSpans().At(i);
 			for j := 0; j < rs.InstrumentationLibrarySpans().Len(); j++ {
-				ils := rs.InstrumentationLibrarySpans().At(j);
+				spans := rs.InstrumentationLibrarySpans().At(j).Spans();
 				
 				newSpans := pdata.NewSpanSlice()
-				for k := 0; k < ils.Spans().Len(); k++ {
-					executionSpan := ils.Spans().At(k)
+				for k := 0; k < spans.Len(); k++ {
+					executionSpan := spans.At(k)
 					id, ok := executionSpan.Attributes().Get("activationId")
 					if !ok {
 						log.Println("activation id not found")
@@ -109,7 +109,7 @@ func (s *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 						}
 					}
 				}
-				newSpans.MoveAndAppendTo(ils.Spans())
+				newSpans.MoveAndAppendTo(spans)
 			}
 		}
 	}
