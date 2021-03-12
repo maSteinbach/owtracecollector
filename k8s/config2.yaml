@@ -15,6 +15,7 @@ data:
           http:
     processors:
       batch:
+      owtraceprocessor:
     extensions:
       health_check: {}
       zpages: {}
@@ -26,7 +27,7 @@ data:
       pipelines:
         traces/1:
           receivers: [otlp]
-          processors: [batch]
+          processors: [owtraceprocessor]
           exporters: [zipkin]
 ---
 apiVersion: v1
@@ -75,12 +76,8 @@ spec:
         component: otel-collector
     spec:
       containers:
-      - command:
-          - "/otelcol"
-          - "--config=/conf/otel-collector-config.yaml"
-#           Memory Ballast size should be max 1/3 to 1/2 of memory.
-          - "--mem-ballast-size-mib=683"
-        image: otel/opentelemetry-collector-dev:latest
+      - args: ["--config", "/conf/otel-collector-config.yaml"]
+        image: koelschkellerkind/owtracecollector:latest
         name: otel-collector
         resources:
           limits:
