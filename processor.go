@@ -38,7 +38,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 	}
 	client, err := whisk.NewClient(http.DefaultClient, config)
 	if err != nil {
-		p.logger.Info("Unable to connect to OpenWhisk \nError message: " + err.Error())
+		p.logger.Info("Unable to connect to OpenWhisk, error message: " + err.Error())
 	} else {
 		// ResourceSpans[] -> InstrumentationLibrarySpans[] -> Spans[]
 		for i := 0; i < batch.ResourceSpans().Len(); i++ {
