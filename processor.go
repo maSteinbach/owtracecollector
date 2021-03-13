@@ -55,11 +55,12 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 					} else {
 						p.logger.Info("Processing span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal())
 						activation, res, err := client.Activations.Get(id.StringVal())
-						for err != nil && retries > 0 {
+						counter := retries
+						for err != nil && counter > 0 {
 							time.Sleep(sleep * time.Second)
-							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + " Retrying ...")
+							p.logger.Info("Access to OpenWhisk API failed for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + ". Retrying ...")
 							activation, res, err = client.Activations.Get(id.StringVal())
-							retries--
+							counter--
 						}
 						if res.StatusCode == http.StatusOK {
 							// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns
