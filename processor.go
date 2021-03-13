@@ -89,7 +89,8 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							// add execution span to new parent span
 							executionSpan.SetSpanID(pdata.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
 							executionSpan.SetParentSpanID(newParentSpan.SpanID())
-							executionSpan.SetName("execution: " + executionSpan.Name())
+							executionSpanName := executionSpan.Name()
+							executionSpan.SetName("execution: " + executionSpanName)
 
 							// if wait time present: create wait span and add to new parent span
 							if waitTime != nil {
@@ -97,7 +98,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								executionSpan.CopyTo(waitSpan)
 								waitSpan.SetSpanID(pdata.NewSpanID([8]byte{2, 3, 4, 5, 6, 7, 8, 9}))
 								waitSpan.SetParentSpanID(newParentSpan.SpanID())
-								waitSpan.SetName("waitTime: " + waitSpan.Name())
+								waitSpan.SetName("waitTime: " + executionSpanName)
 								waitSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano - waitTimeNano))
 								waitSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
 								newSpans.Append(waitSpan)
@@ -109,7 +110,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								executionSpan.CopyTo(initSpan)
 								initSpan.SetSpanID(pdata.NewSpanID([8]byte{3, 4, 5, 6, 7, 8, 9, 0}))
 								initSpan.SetParentSpanID(newParentSpan.SpanID())
-								initSpan.SetName("initTime: " + initSpan.Name())
+								initSpan.SetName("initTime: " + executionSpanName)
 								initSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
 								initSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano))
 								newSpans.Append(initSpan)
