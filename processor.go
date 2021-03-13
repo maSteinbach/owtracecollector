@@ -57,6 +57,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 						activation, res, err := client.Activations.Get(id.StringVal())
 						for err != nil && retries > 0 {
 							time.Sleep(sleep * time.Second)
+							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + " Retrying ...")
 							activation, res, err = client.Activations.Get(id.StringVal())
 							retries--
 						}
