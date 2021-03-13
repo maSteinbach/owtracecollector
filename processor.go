@@ -126,10 +126,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 			}
 		}
 	}
-	if err := p.next.ConsumeTraces(ctx, batch); err != nil {
-		return err
-	}
-	return nil
+	return p.next.ConsumeTraces(ctx, batch)
 }
 
 func createSpanID() [8]byte {
