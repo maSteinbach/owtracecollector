@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/apache/openwhisk-client-go/whisk"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/pdata"
@@ -45,7 +46,6 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 			rs := batch.ResourceSpans().At(i)
 			for j := 0; j < rs.InstrumentationLibrarySpans().Len(); j++ {
 				spans := rs.InstrumentationLibrarySpans().At(j).Spans()
-
 				newSpans := pdata.NewSpanSlice()
 				for k := 0; k < spans.Len(); k++ {
 					executionSpan := spans.At(k)
@@ -89,7 +89,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							newSpans.Append(newParentSpan)
 
 							// add execution span to new parent span
-							executionSpan.SetSpanID(pdata.NewSpanID([8]byte{1, 2, 3, 4, 5, 6, 7, 8}))
+							executionSpan.SetSpanID(pdata.NewSpanID(createSpanID()))	
 							executionSpan.SetParentSpanID(newParentSpan.SpanID())
 							executionSpanName := executionSpan.Name()
 							executionSpan.SetName("execution: " + executionSpanName)
@@ -98,7 +98,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							if waitTime != nil {
 								waitSpan := pdata.NewSpan()
 								executionSpan.CopyTo(waitSpan)
-								waitSpan.SetSpanID(pdata.NewSpanID([8]byte{2, 3, 4, 5, 6, 7, 8, 9}))
+								waitSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
 								waitSpan.SetParentSpanID(newParentSpan.SpanID())
 								waitSpan.SetName("waitTime: " + executionSpanName)
 								waitSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano - waitTimeNano))
@@ -110,7 +110,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							if initTime != nil {
 								initSpan := pdata.NewSpan()
 								executionSpan.CopyTo(initSpan)
-								initSpan.SetSpanID(pdata.NewSpanID([8]byte{3, 4, 5, 6, 7, 8, 9, 0}))
+								initSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
 								initSpan.SetParentSpanID(newParentSpan.SpanID())
 								initSpan.SetName("initTime: " + executionSpanName)
 								initSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
@@ -130,6 +130,13 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 		return err
 	}
 	return nil
+}
+
+func createSpanID() [8]byte {
+	uuid, _ := uuid.New().MarshalBinary()
+	var result [8]byte
+	copy(result[:], uuid[:8])
+	return result
 }
 
 func (p *owTraceProcessor) GetCapabilities() component.ProcessorCapabilities {
