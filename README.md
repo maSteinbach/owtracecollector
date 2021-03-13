@@ -44,3 +44,4 @@ docker build -t koelschkellerkind/owtracecollector .
 ### TODO
 
 * Remove OpenWhisk config from `processor.go` line 32-36
+* Move `client, err := whisk.NewClient(http.DefaultClient, config)` to Start routine
