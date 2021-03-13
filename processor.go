@@ -112,7 +112,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								newSpans.Append(initSpan)
 							}
 						} else {
-							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + "\n Status code: " + res.Status + "\n Error message: " + err.Error())
+							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error())
 						}
 					}
 				}
