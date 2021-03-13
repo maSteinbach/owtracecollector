@@ -61,26 +61,29 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							retries--
 						}
 						if res.StatusCode == http.StatusOK {
-							executionStart := activation.Start
+							// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns
+							executionStartNano := activation.Start * 1e06
 							waitTime := activation.Annotations.GetValue("waitTime")
 							initTime := activation.Annotations.GetValue("initTime")
 
-							var waitTimeVal int64
+							var waitTimeNano int64
 							if waitTime != nil {
-								waitTimeVal, _ = waitTime.(json.Number).Int64()
-								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeVal, 10))
+								waitTimeNano, _ = waitTime.(json.Number).Int64()
+								waitTimeNano *= 1e06
+								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + " ns")
 							}
-							var initTimeVal int64
+							var initTimeNano int64
 							if initTime != nil {
-								initTimeVal, _ = initTime.(json.Number).Int64()
-								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeVal, 10))
+								initTimeNano, _ = initTime.(json.Number).Int64()
+								initTimeNano *= 1e6
+								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
 							}
 
 							// create new parent span
 							newParentSpan := pdata.NewSpan()
 							executionSpan.CopyTo(newParentSpan)
 							newParentSpan.SetSpanID(executionSpan.SpanID())
-							newParentSpan.SetStartTime(pdata.TimestampUnixNano(executionStart - waitTimeVal - initTimeVal))
+							newParentSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
 							newSpans.Append(newParentSpan)
 
 							// add execution span to new parent span
@@ -95,8 +98,8 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								waitSpan.SetSpanID(pdata.NewSpanID([8]byte{2, 3, 4, 5, 6, 7, 8, 9}))
 								waitSpan.SetParentSpanID(newParentSpan.SpanID())
 								waitSpan.SetName("waitTime: " + waitSpan.Name())
-								waitSpan.SetStartTime(pdata.TimestampUnixNano(executionStart - initTimeVal - waitTimeVal))
-								waitSpan.SetEndTime(pdata.TimestampUnixNano(executionStart - initTimeVal))
+								waitSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano - waitTimeNano))
+								waitSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
 								newSpans.Append(waitSpan)
 							}
 
@@ -107,8 +110,8 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								initSpan.SetSpanID(pdata.NewSpanID([8]byte{3, 4, 5, 6, 7, 8, 9, 0}))
 								initSpan.SetParentSpanID(newParentSpan.SpanID())
 								initSpan.SetName("initTime: " + initSpan.Name())
-								initSpan.SetStartTime(pdata.TimestampUnixNano(executionStart - initTimeVal))
-								initSpan.SetEndTime(pdata.TimestampUnixNano(executionStart))
+								initSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
+								initSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano))
 								newSpans.Append(initSpan)
 							}
 						} else {
