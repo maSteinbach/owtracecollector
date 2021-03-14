@@ -16,13 +16,9 @@ import (
 func TestAddWaitAndInitSpan(t *testing.T) {
 
 	// Traces[] -> ResourceSpans[] -> InstrumentationLibrarySpans[] -> Spans[]
-
 	rs := pdata.NewResourceSpans()
 	rs.InstrumentationLibrarySpans().Resize(1)
 	ils := rs.InstrumentationLibrarySpans().At(0)
-	//library := ils.InstrumentationLibrary()
-	//library.InitEmpty()
-	//library.SetName("first-library")
 	ils.Spans().Resize(1)
 	span := ils.Spans().At(0)
 	span.SetName("first-execution-span")
@@ -52,16 +48,5 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 
 	// verify
 	assert.NoError(t, err)
-	//assert.Len(t, next.Traces, 2)
 	assert.Equal(t, next.Traces[0].SpanCount(), 7);
-
-	// first batch
-	//firstOutILS := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0)
-	//assert.Equal(t, library.Name(), firstOutILS.InstrumentationLibrary().Name())
-	//assert.Equal(t, firstSpan.Name(), firstOutILS.Spans().At(0).Name())
-
-	// second batch
-	//secondOutILS := next.Traces[1].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0)
-	//assert.Equal(t, library.Name(), secondOutILS.InstrumentationLibrary().Name())
-	//assert.Equal(t, secondSpan.Name(), secondOutILS.Spans().At(0).Name())
 }
