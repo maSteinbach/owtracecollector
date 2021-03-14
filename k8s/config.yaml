@@ -12,21 +12,19 @@ data:
         protocols:
           http:
             endpoint: "localhost:55681"
-
     processors:
       batch:
         send_batch_size: 8192
         timeout: 10s
       owtraceprocessor:
-
+        ow_host: http://owdev-nginx.openwhisk.svc.cluster.local:80
+        ow_auth_token: 23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
     exporters:
       zipkin:
         endpoint: "http://zipkinot.default.svc.cluster.local:9411/api/v2/spans"
       logging:
-
     extensions:
       health_check:
-
     service:
       pipelines:
         traces:

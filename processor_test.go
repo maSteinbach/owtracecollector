@@ -11,8 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: do not hardcode activation id
-
 func TestAddWaitAndInitSpan(t *testing.T) {
 
 	// Traces[] -> ResourceSpans[] -> InstrumentationLibrarySpans[] -> Spans[]
@@ -43,8 +41,12 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 	// Test
 	next := &componenttest.ExampleExporterConsumer{}
 	creationParams := component.ProcessorCreateParams{Logger: zap.NewNop()}
-	processor := newOwTraceProcessor(next, creationParams.Logger)
-	err := processor.ConsumeTraces(context.Background(), inBatch)
+	config := &Config{
+		OwHost: "10.195.5.240:31001",
+		OwAuthToken: "23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP",
+	}
+	processor, err := newOwTraceProcessor(next, config, creationParams.Logger)
+	processor.ConsumeTraces(context.Background(), inBatch)
 
 	// Verify
 	assert.NoError(t, err)
