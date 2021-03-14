@@ -81,20 +81,20 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
 							}
 
-							// create new parent span
+							// Create new parent span
 							newParentSpan := pdata.NewSpan()
 							executionSpan.CopyTo(newParentSpan)
 							newParentSpan.SetSpanID(executionSpan.SpanID())
 							newParentSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
 							newSpans.Append(newParentSpan)
 
-							// add execution span to new parent span
+							// Add execution span to new parent span
 							executionSpan.SetSpanID(pdata.NewSpanID(createSpanID()))	
 							executionSpan.SetParentSpanID(newParentSpan.SpanID())
 							executionSpanName := executionSpan.Name()
 							executionSpan.SetName("execution: " + executionSpanName)
 
-							// if wait time present: create wait span and add to new parent span
+							// If wait time present: create wait span and add to new parent span
 							if waitTime != nil {
 								waitSpan := pdata.NewSpan()
 								executionSpan.CopyTo(waitSpan)
@@ -106,7 +106,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								newSpans.Append(waitSpan)
 							}
 
-							// if init time present: create init span and add to new parent span
+							// If init time present: create init span and add to new parent span
 							if initTime != nil {
 								initSpan := pdata.NewSpan()
 								executionSpan.CopyTo(initSpan)
