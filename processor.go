@@ -26,6 +26,7 @@ type owTraceProcessor struct {
 	next   consumer.TracesConsumer
 	owclient *whisk.Client
 	logger *zap.Logger
+	logging bool
 }
 
 func newOwTraceProcessor(next consumer.TracesConsumer, cfg *Config, logger *zap.Logger) (*owTraceProcessor, error) {
@@ -44,7 +45,7 @@ func newOwTraceProcessor(next consumer.TracesConsumer, cfg *Config, logger *zap.
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to OpenWhisk API of host %s and token %s, error message: %s", cfg.OwHost, cfg.OwAuthToken, err.Error())
 	}
-	return &owTraceProcessor{next: next, owclient: c, logger: logger}, nil
+	return &owTraceProcessor{next: next, owclient: c, logger: logger, logging: cfg.Logging}, nil
 }
 
 func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces) error {
@@ -57,15 +58,19 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 			for k := 0; k < spans.Len(); k++ {
 				executionSpan := spans.At(k)
 				id, ok := executionSpan.Attributes().Get("activationId")
-				if !ok {
+				if !ok && p.logging {
 					p.logger.Info("Span " + executionSpan.SpanID().HexString() + " without activation id attribute")
 				} else {
-					p.logger.Info("Processing span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal())
+					if p.logging {
+						p.logger.Info("Processing span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal())
+					}
 					activation, res, err := p.owclient.Activations.Get(id.StringVal())
 					counter := retries
 					for err != nil && counter > 0 {
 						time.Sleep(sleep * time.Second)
-						p.logger.Info("Access to OpenWhisk API failed for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + ". Retrying ...")
+						if p.logging {
+							p.logger.Info("Access to OpenWhisk API failed for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + ". Retrying ...")
+						}
 						activation, res, err = p.owclient.Activations.Get(id.StringVal())
 						counter--
 					}
@@ -79,13 +84,17 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 						if waitTime != nil {
 							waitTimeNano, _ = waitTime.(json.Number).Int64()
 							waitTimeNano *= 1e06
-							p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + " ns")
+							if p.logging {
+								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + " ns")
+							}
 						}
 						var initTimeNano int64
 						if initTime != nil {
 							initTimeNano, _ = initTime.(json.Number).Int64()
 							initTimeNano *= 1e6
-							p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
+							if p.logging {
+								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
+							}
 						}
 
 						// Create new parent span
@@ -125,7 +134,9 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							newSpans.Append(initSpan)
 						}
 					} else {
-						p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error())
+						if p.logging {
+							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error())
+						}
 					}
 				}
 			}
