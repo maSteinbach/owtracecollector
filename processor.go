@@ -77,6 +77,7 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 					if res.StatusCode == http.StatusOK {
 						// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns
 						executionStartNano := activation.Start * 1e06
+						executionEndNano := activation.End * 1e06
 						waitTime := activation.Annotations.GetValue("waitTime")
 						initTime := activation.Annotations.GetValue("initTime")
 
@@ -96,20 +97,19 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
 							}
 						}
-
 						// Create new parent span
 						newParentSpan := pdata.NewSpan()
 						executionSpan.CopyTo(newParentSpan)
-						newParentSpan.SetSpanID(executionSpan.SpanID())
+						newParentSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
 						newParentSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
+						newParentSpan.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
 						newSpans.Append(newParentSpan)
-
 						// Add execution span to new parent span
-						executionSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
 						executionSpan.SetParentSpanID(newParentSpan.SpanID())
+						executionSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano))
+						executionSpan.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
 						executionSpanName := executionSpan.Name()
 						executionSpan.SetName("execution: " + executionSpanName)
-
 						// If wait time present: create wait span and add to new parent span
 						if waitTime != nil {
 							waitSpan := pdata.NewSpan()
@@ -121,7 +121,6 @@ func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces
 							waitSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
 							newSpans.Append(waitSpan)
 						}
-
 						// If init time present: create init span and add to new parent span
 						if initTime != nil {
 							initSpan := pdata.NewSpan()
