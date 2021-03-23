@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanprocessor
 
 import (
 	"context"
@@ -17,19 +17,19 @@ import (
 )
 
 var (
-	_       component.TracesProcessor = (*owTraceProcessor)(nil)
+	_       component.TracesProcessor = (*owSpanProcessor)(nil)
 	retries int                       = 2
 	sleep   time.Duration             = 5
 )
 
-type owTraceProcessor struct {
-	next   consumer.TracesConsumer
+type owSpanProcessor struct {
+	next     consumer.TracesConsumer
 	owclient *whisk.Client
-	logger *zap.Logger
-	logging bool
+	logger   *zap.Logger
+	logging  bool
 }
 
-func newOwTraceProcessor(next consumer.TracesConsumer, cfg *Config, logger *zap.Logger) (*owTraceProcessor, error) {
+func newOwSpanProcessor(next consumer.TracesConsumer, cfg *Config, logger *zap.Logger) (*owSpanProcessor, error) {
 	config := &whisk.Config{
 		Host:      cfg.OwHost,
 		AuthToken: cfg.OwAuthToken,
@@ -45,10 +45,10 @@ func newOwTraceProcessor(next consumer.TracesConsumer, cfg *Config, logger *zap.
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to OpenWhisk API of host %s and token %s, error message: %s", cfg.OwHost, cfg.OwAuthToken, err.Error())
 	}
-	return &owTraceProcessor{next: next, owclient: c, logger: logger, logging: cfg.Logging}, nil
+	return &owSpanProcessor{next: next, owclient: c, logger: logger, logging: cfg.Logging}, nil
 }
 
-func (p *owTraceProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces) error {
+func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces) error {
 	// ResourceSpans[] -> InstrumentationLibrarySpans[] -> Spans[]
 	for i := 0; i < batch.ResourceSpans().Len(); i++ {
 		rs := batch.ResourceSpans().At(i)
@@ -152,14 +152,14 @@ func createSpanID() [8]byte {
 	return result
 }
 
-func (p *owTraceProcessor) GetCapabilities() component.ProcessorCapabilities {
+func (p *owSpanProcessor) GetCapabilities() component.ProcessorCapabilities {
 	return component.ProcessorCapabilities{MutatesConsumedData: true}
 }
 
-func (p *owTraceProcessor) Start(_ context.Context, host component.Host) error {
+func (p *owSpanProcessor) Start(_ context.Context, host component.Host) error {
 	return nil
 }
 
-func (p *owTraceProcessor) Shutdown(context.Context) error {
+func (p *owSpanProcessor) Shutdown(context.Context) error {
 	return nil
 }

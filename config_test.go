@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanprocessor
 
 import (
 	"path"

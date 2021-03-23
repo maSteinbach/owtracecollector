@@ -5,7 +5,7 @@ dist:
   output_path: "/Users/markus/Documents/TUM/Thesis/owtracecollector/owtracecollector-dist"
 
 processors:
-  - gomod: "github.com/koelschkellerkind/owtraceprocessor v0.0.0"
-    name: "owtraceprocessor"
+  - gomod: "github.com/koelschkellerkind/owspanprocessor v0.0.0"
+    name: "owspanprocessor"
     path: "/Users/markus/Documents/TUM/Thesis/owtracecollector"
     

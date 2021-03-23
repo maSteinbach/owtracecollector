@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanprocessor
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 	secondSpan.SetTraceID(pdata.NewTraceID([16]byte{1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}))
 	// Warm activation -> results in total 4 spans (parent, execution, wait)
 	secondSpan.Attributes().InsertString("activationId", "4bec111e4f104864ac111e4f10f8643e")
-	
+
 	inBatch := pdata.NewTraces()
 	inBatch.ResourceSpans().Append(rs)
 	inBatch.ResourceSpans().Append(rs2)
@@ -42,14 +42,14 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 	next := &componenttest.ExampleExporterConsumer{}
 	creationParams := component.ProcessorCreateParams{Logger: zap.NewNop()}
 	config := &Config{
-		OwHost: "10.195.5.240:31001",
+		OwHost:      "10.195.5.240:31001",
 		OwAuthToken: "23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP",
-		Logging: true,
+		Logging:     true,
 	}
-	processor, err := newOwTraceProcessor(next, config, creationParams.Logger)
+	processor, err := newOwSpanProcessor(next, config, creationParams.Logger)
 	processor.ConsumeTraces(context.Background(), inBatch)
 
 	// Verify
 	assert.NoError(t, err)
-	assert.Equal(t, next.Traces[0].SpanCount(), 7);
+	assert.Equal(t, next.Traces[0].SpanCount(), 7)
 }

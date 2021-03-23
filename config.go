@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanprocessor
 
 import "go.opentelemetry.io/collector/config/configmodels"
 

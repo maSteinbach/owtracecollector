@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanprocessor
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "owtraceprocessor"
-	defaultLogging bool = false 
+	typeStr             = "owspanprocessor"
+	defaultLogging bool = false
 )
 
 // NewFactory creates a factory for the routing processor.
@@ -48,5 +48,5 @@ func createTraceProcessor(
 	if config.OwAuthToken == "" {
 		return nil, errors.New("processor config requires a non-empty 'ow_auth_token'")
 	}
-	return newOwTraceProcessor(nextConsumer, config, params.Logger)
+	return newOwSpanProcessor(nextConsumer, config, params.Logger)
 }
