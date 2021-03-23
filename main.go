@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/collector/service"
 	"go.opentelemetry.io/collector/service/defaultcomponents"
 
-	"github.com/koelschkellerkind/owspanprocessor"
+	"github.com/koelschkellerkind/owtracecollector/owspanprocessor"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/koelschkellerkind/owspanprocessor
+module github.com/koelschkellerkind/owtracecollector
 
 go 1.15
 
