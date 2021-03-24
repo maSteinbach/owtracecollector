@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/apache/openwhisk-client-go/whisk"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/pdata"
@@ -54,28 +53,27 @@ func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces)
 		rs := batch.ResourceSpans().At(i)
 		for j := 0; j < rs.InstrumentationLibrarySpans().Len(); j++ {
 			spans := rs.InstrumentationLibrarySpans().At(j).Spans()
-			newSpans := pdata.NewSpanSlice()
 			for k := 0; k < spans.Len(); k++ {
-				executionSpan := spans.At(k)
-				id, ok := executionSpan.Attributes().Get("activationId")
+				span := spans.At(k)
+				id, ok := span.Attributes().Get("activationId")
 				if !ok && p.logging {
-					p.logger.Info("Span " + executionSpan.SpanID().HexString() + " without activation id attribute")
+					p.logger.Info("Span " + span.SpanID().HexString() + " without activation id attribute")
 				} else {
 					if p.logging {
-						p.logger.Info("Processing span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal())
+						p.logger.Info("Processing span " + span.SpanID().HexString() + " with activation id: " + id.StringVal())
 					}
 					activation, res, err := p.owclient.Activations.Get(id.StringVal())
 					counter := retries
 					for err != nil && counter > 0 {
 						time.Sleep(sleep * time.Second)
 						if p.logging {
-							p.logger.Info("Access to OpenWhisk API failed for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + ". Retrying ...")
+							p.logger.Info("Access to OpenWhisk API failed for span " + span.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error() + ". Retrying ...")
 						}
 						activation, res, err = p.owclient.Activations.Get(id.StringVal())
 						counter--
 					}
 					if res.StatusCode == http.StatusOK {
-						// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns
+						// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns.
 						executionStartNano := activation.Start * 1e06
 						executionEndNano := activation.End * 1e06
 						waitTime := activation.Annotations.GetValue("waitTime")
@@ -86,7 +84,7 @@ func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces)
 							waitTimeNano, _ = waitTime.(json.Number).Int64()
 							waitTimeNano *= 1e06
 							if p.logging {
-								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + " ns")
+								p.logger.Info("Span " + span.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + "ns")
 							}
 						}
 						var initTimeNano int64
@@ -94,62 +92,30 @@ func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces)
 							initTimeNano, _ = initTime.(json.Number).Int64()
 							initTimeNano *= 1e6
 							if p.logging {
-								p.logger.Info("Span " + executionSpan.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + " ns")
+								p.logger.Info("Span " + span.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + "ns")
 							}
 						}
-						// Create new parent span
-						newParentSpan := pdata.NewSpan()
-						executionSpan.CopyTo(newParentSpan)
-						newParentSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
-						newParentSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
-						newParentSpan.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
-						newSpans.Append(newParentSpan)
-						// Add execution span to new parent span
-						executionSpan.SetParentSpanID(newParentSpan.SpanID())
-						executionSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano))
-						executionSpan.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
-						executionSpanName := executionSpan.Name()
-						executionSpan.SetName("execution: " + executionSpanName)
-						// If wait time present: create wait span and add to new parent span
+						// Adjust the start time of the span such that the wait and init time is included. Adjust the end time of the
+						// span such that it is equal to the end time received from the OpenWhisk API.
+						span.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
+						span.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
+						// Add waitTime and initTime attributes if present.
 						if waitTime != nil {
-							waitSpan := pdata.NewSpan()
-							executionSpan.CopyTo(waitSpan)
-							waitSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
-							waitSpan.SetParentSpanID(newParentSpan.SpanID())
-							waitSpan.SetName("waitTime: " + executionSpanName)
-							waitSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano - waitTimeNano))
-							waitSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
-							newSpans.Append(waitSpan)
+							span.Attributes().InsertInt("waitTimeNano", waitTimeNano)
 						}
-						// If init time present: create init span and add to new parent span
 						if initTime != nil {
-							initSpan := pdata.NewSpan()
-							executionSpan.CopyTo(initSpan)
-							initSpan.SetSpanID(pdata.NewSpanID(createSpanID()))
-							initSpan.SetParentSpanID(newParentSpan.SpanID())
-							initSpan.SetName("initTime: " + executionSpanName)
-							initSpan.SetStartTime(pdata.TimestampUnixNano(executionStartNano - initTimeNano))
-							initSpan.SetEndTime(pdata.TimestampUnixNano(executionStartNano))
-							newSpans.Append(initSpan)
+							span.Attributes().InsertInt("initTimeNano", initTimeNano)
 						}
 					} else {
 						if p.logging {
-							p.logger.Info("Unable to access OpenWhisk API for span " + executionSpan.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error())
+							p.logger.Info("Unable to access OpenWhisk API for span " + span.SpanID().HexString() + " with activation id: " + id.StringVal() + ", status code: " + res.Status + ", error message: " + err.Error())
 						}
 					}
 				}
 			}
-			newSpans.MoveAndAppendTo(spans)
 		}
 	}
 	return p.next.ConsumeTraces(ctx, batch)
-}
-
-func createSpanID() [8]byte {
-	uuid, _ := uuid.New().MarshalBinary()
-	var result [8]byte
-	copy(result[:], uuid[:8])
-	return result
 }
 
 func (p *owSpanProcessor) GetCapabilities() component.ProcessorCapabilities {
