@@ -44,9 +44,6 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 				if ok {
 					initTimeNano = pdata.TimestampUnixNano(initTime.IntVal())
 				}
-				if p.logging {
-					p.logger.Info("Attaching wait, init and execution spans to span " + parentSpan.SpanID().HexString())
-				}
 				// Create execution span.
 				newSpans.Append(
 					p.createSpan(
@@ -57,6 +54,9 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 						parentSpan.EndTime(),
 					),
 				)
+				if p.logging {
+					p.logger.Info("Attached execution span to parent span " + parentSpan.SpanID().HexString())
+				}
 				// Create wait span.
 				if waitTimeNano > 0 {
 					newSpans.Append(
@@ -68,6 +68,9 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 							parentSpan.StartTime() + waitTimeNano,
 						),
 					)
+					if p.logging {
+						p.logger.Info("Attached waitTime span to parent span " + parentSpan.SpanID().HexString())
+					}
 				}
 				// Create init span.
 				if initTimeNano > 0 {
@@ -80,6 +83,9 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 							parentSpan.StartTime() + waitTimeNano + initTimeNano,
 						),
 					)
+					if p.logging {
+						p.logger.Info("Attached initTime span to parent span " + parentSpan.SpanID().HexString())
+					}
 				}
 			}
 			newSpans.MoveAndAppendTo(spans)
