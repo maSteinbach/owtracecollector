@@ -35,7 +35,7 @@ data:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [batch, attributes, owspanprocessor, owspanattacher]
+          processors: [batch, owspanprocessor, owspanattacher, attributes]
           exporters: [zipkin]
       extensions: [health_check]
 ---
@@ -82,7 +82,7 @@ spec:
     spec:
       containers:
       - args: ["--config", "/conf/otel-collector-config.yaml"]
-        image: koelschkellerkind/owtracecollector:1.0.1
+        image: koelschkellerkind/owtracecollector:1.0.2
         name: owtracecollector
         resources:
           limits:
