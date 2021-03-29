@@ -16,10 +16,16 @@ data:
       batch:
         send_batch_size: 8192
         timeout: 10s
-      owtraceprocessor:
+      attributes:
+        actions:
+        - key: span.kind
+          action: delete
+      owspanprocessor:
         ow_host: http://owdev-nginx.openwhisk.svc.cluster.local:80
         ow_auth_token: 23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-        logging: false
+        logging: true
+      owspanattacher:
+        logging: true
     exporters:
       zipkin:
         endpoint: "http://zipkinot.default.svc.cluster.local:9411/api/v2/spans"
@@ -29,7 +35,7 @@ data:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [batch, owtraceprocessor]
+          processors: [batch, attributes, owspanprocessor, owspanattacher]
           exporters: [zipkin]
       extensions: [health_check]
 ---
@@ -76,7 +82,7 @@ spec:
     spec:
       containers:
       - args: ["--config", "/conf/otel-collector-config.yaml"]
-        image: koelschkellerkind/owtracecollector:1.0.0
+        image: koelschkellerkind/owtracecollector:1.0.1
         name: owtracecollector
         resources:
           limits:

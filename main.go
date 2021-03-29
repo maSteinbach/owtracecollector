@@ -8,7 +8,8 @@ import (
 	"go.opentelemetry.io/collector/service"
 	"go.opentelemetry.io/collector/service/defaultcomponents"
 
-	"github.com/koelschkellerkind/owtraceprocessor"
+	"github.com/koelschkellerkind/owtracecollector/owspanprocessor"
+	"github.com/koelschkellerkind/owtracecollector/owspanattacher"
 )
 
 func main() {
@@ -41,7 +42,8 @@ func components() (component.Factories, error) {
 		return component.Factories{}, err
 	}
 	processors := []component.ProcessorFactory{
-		owtraceprocessor.NewFactory(),
+		owspanprocessor.NewFactory(),
+		owspanattacher.NewFactory(),
 	}
 	for _, pr := range factories.Processors {
 		processors = append(processors, pr)

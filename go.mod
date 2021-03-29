@@ -1,4 +1,4 @@
-module github.com/koelschkellerkind/owtraceprocessor
+module github.com/koelschkellerkind/owtracecollector
 
 go 1.15
 

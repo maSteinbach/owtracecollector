@@ -1,0 +1,19 @@
+receivers:
+  examplereceiver:
+
+processors:
+  owspanattacher:
+    logging: true
+
+exporters:
+  exampleexporter:
+
+service:
+  pipelines:
+    traces:
+      receivers:
+      - examplereceiver
+      processors:
+      - owspanattacher
+      exporters:
+      - exampleexporter

@@ -1,8 +1,7 @@
-package owtraceprocessor
+package owspanattacher
 
 import (
 	"context"
-	"errors"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configmodels"
@@ -12,8 +11,8 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "owtraceprocessor"
-	defaultLogging bool = false 
+	typeStr             = "owspanattacher"
+	defaultLogging bool = false
 )
 
 // NewFactory creates a factory for the routing processor.
@@ -41,12 +40,5 @@ func createTraceProcessor(
 	cfg configmodels.Processor,
 	nextConsumer consumer.TracesConsumer,
 ) (component.TracesProcessor, error) {
-	config := cfg.(*Config)
-	if config.OwHost == "" {
-		return nil, errors.New("processor config requires a non-empty 'ow_host'")
-	}
-	if config.OwAuthToken == "" {
-		return nil, errors.New("processor config requires a non-empty 'ow_auth_token'")
-	}
-	return newOwTraceProcessor(nextConsumer, config, params.Logger)
+	return newOwSpanAttacher(nextConsumer, cfg.(*Config), params.Logger)
 }

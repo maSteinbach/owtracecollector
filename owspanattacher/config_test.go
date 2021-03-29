@@ -1,4 +1,4 @@
-package owtraceprocessor
+package owspanattacher
 
 import (
 	"path"
