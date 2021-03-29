@@ -101,10 +101,12 @@ func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces)
 						span.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
 						// Add waitTime and initTime attributes if present.
 						if waitTime != nil {
-							span.Attributes().InsertInt("waitTimeNano", waitTimeNano)
+							waitTimeMilli := waitTimeNano / 1e6
+							span.Attributes().InsertInt("waitTimeMilli", waitTimeMilli)
 						}
 						if initTime != nil {
-							span.Attributes().InsertInt("initTimeNano", initTimeNano)
+							initTimeMilli := initTimeNano / 1e6
+							span.Attributes().InsertInt("initTimeMilli", initTimeMilli)
 						}
 					} else {
 						if p.logging {

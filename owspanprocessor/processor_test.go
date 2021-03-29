@@ -45,15 +45,15 @@ func TestAddWaitAndInitTimeAttributes(t *testing.T) {
 	}
 	processor, err := newOwSpanProcessor(next, config, creationParams.Logger)
 	processor.ConsumeTraces(context.Background(), inBatch)
-	s1waitTimeNano, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().Get("waitTimeNano")
-	s1initTimeNano, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().Get("initTimeNano")
-	s2waitTimeNano, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(1).Attributes().Get("waitTimeNano")
-	_, s2initTimePresent := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(1).Attributes().Get("initTimeNano")
+	s1waitTimeMilli, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().Get("waitTimeMilli")
+	s1initTimeMilli, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(0).Attributes().Get("initTimeMilli")
+	s2waitTimeMilli, _ := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(1).Attributes().Get("waitTimeMilli")
+	_, s2initTimePresent := next.Traces[0].ResourceSpans().At(0).InstrumentationLibrarySpans().At(0).Spans().At(1).Attributes().Get("initTimeMilli")
 	
 	// Verify
 	assert.NoError(t, err)
-	assert.Equal(t, s1waitTimeNano.IntVal(), int64(4276000000))
-	assert.Equal(t, s1initTimeNano.IntVal(), int64(128000000))
-	assert.Equal(t, s2waitTimeNano.IntVal(), int64(18000000))
+	assert.Equal(t, s1waitTimeMilli.IntVal(), int64(4276))
+	assert.Equal(t, s1initTimeMilli.IntVal(), int64(128))
+	assert.Equal(t, s2waitTimeMilli.IntVal(), int64(18))
 	assert.False(t, s2initTimePresent)
 }

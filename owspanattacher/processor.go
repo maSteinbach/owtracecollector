@@ -35,14 +35,14 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 				parentSpan := spans.At(k)
 				// Get optional attributes waitTime and initTime from span.
 				var waitTimeNano pdata.TimestampUnixNano
-				waitTime, ok := parentSpan.Attributes().Get("waitTimeNano")
+				waitTime, ok := parentSpan.Attributes().Get("waitTimeMilli")
 				if ok {
-					waitTimeNano = pdata.TimestampUnixNano(waitTime.IntVal())
+					waitTimeNano = pdata.TimestampUnixNano(waitTime.IntVal() * 1e6)
 				} 
 				var initTimeNano pdata.TimestampUnixNano
-				initTime, ok := parentSpan.Attributes().Get("initTimeNano")
+				initTime, ok := parentSpan.Attributes().Get("initTimeMilli")
 				if ok {
-					initTimeNano = pdata.TimestampUnixNano(initTime.IntVal())
+					initTimeNano = pdata.TimestampUnixNano(initTime.IntVal() * 1e6)
 				}
 				// Create execution span.
 				newSpans.Append(

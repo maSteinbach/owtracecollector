@@ -24,8 +24,8 @@ func TestAddWaitAndInitSpan(t *testing.T) {
 	span.SetSpanID(pdata.NewSpanID([8]byte{0, 1, 2, 3, 4, 5, 6, 7}))
 	span.SetStartTime(pdata.TimestampUnixNano(1616439288861000000))
 	span.SetEndTime(pdata.TimestampUnixNano(1616439289383000000))
-	span.Attributes().InsertInt("waitTimeNano", 5463000000)
-	span.Attributes().InsertInt("initTimeNano", 168000000)
+	span.Attributes().InsertInt("waitTimeMilli", 5463)
+	span.Attributes().InsertInt("initTimeMilli", 168)
 
 	inBatch := pdata.NewTraces()
 	inBatch.ResourceSpans().Append(rs)
