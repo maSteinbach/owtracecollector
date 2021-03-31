@@ -82,7 +82,7 @@ spec:
     spec:
       containers:
       - args: ["--config", "/conf/otel-collector-config.yaml"]
-        image: koelschkellerkind/owtracecollector:1.0.2
+        image: koelschkellerkind/owtracecollector:1.0.3
         name: owtracecollector
         resources:
           limits:
