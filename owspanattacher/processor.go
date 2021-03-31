@@ -47,7 +47,7 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 				// Create execution span.
 				newSpans.Append(
 					p.createSpan(
-						"Execution: " + parentSpan.Name(),
+						"exec",
 						parentSpan.TraceID(),
 						parentSpan.SpanID(),
 						parentSpan.StartTime() + waitTimeNano + initTimeNano,
@@ -61,7 +61,7 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 				if waitTimeNano > 0 {
 					newSpans.Append(
 						p.createSpan(
-							"Wait: " + parentSpan.Name(),
+							"wait",
 							parentSpan.TraceID(),
 							parentSpan.SpanID(),
 							parentSpan.StartTime(),
@@ -76,7 +76,7 @@ func (p *owSpanAttacher) ConsumeTraces(ctx context.Context, batch pdata.Traces) 
 				if initTimeNano > 0 {
 					newSpans.Append(
 						p.createSpan(
-							"Init: " + parentSpan.Name(),
+							"init",
 							parentSpan.TraceID(),
 							parentSpan.SpanID(),
 							parentSpan.StartTime() + waitTimeNano,
