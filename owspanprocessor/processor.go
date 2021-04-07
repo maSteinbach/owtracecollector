@@ -73,39 +73,39 @@ func (p *owSpanProcessor) ConsumeTraces(ctx context.Context, batch pdata.Traces)
 						counter--
 					}
 					if res.StatusCode == http.StatusOK {
-						// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API milliseconds returns.
-						executionStartNano := activation.Start * 1e06
-						executionEndNano := activation.End * 1e06
+						// OpenTelemetry works with nanoseconds, whereas the OpenWhisk API returns milliseconds.
+						initExecStartNano := activation.Start * 1e6
+						execEndNano := activation.End * 1e6
 						waitTime := activation.Annotations.GetValue("waitTime")
 						initTime := activation.Annotations.GetValue("initTime")
 
 						var waitTimeNano int64
+						var waitTimeMilli int64
 						if waitTime != nil {
-							waitTimeNano, _ = waitTime.(json.Number).Int64()
-							waitTimeNano *= 1e06
+							waitTimeMilli, _ = waitTime.(json.Number).Int64()
+							waitTimeNano = waitTimeMilli * 1e06
 							if p.logging {
-								p.logger.Info("Span " + span.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeNano, 10) + "ns")
+								p.logger.Info("Span " + span.SpanID().HexString() + " with waitTime: " + strconv.FormatInt(waitTimeMilli, 10) + "ms")
 							}
 						}
-						var initTimeNano int64
+						var initTimeMilli int64
 						if initTime != nil {
-							initTimeNano, _ = initTime.(json.Number).Int64()
-							initTimeNano *= 1e6
+							initTimeMilli, _ = initTime.(json.Number).Int64()
 							if p.logging {
-								p.logger.Info("Span " + span.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeNano, 10) + "ns")
+								p.logger.Info("Span " + span.SpanID().HexString() + " with initTime: " + strconv.FormatInt(initTimeMilli, 10) + "ms")
 							}
 						}
-						// Adjust the start time of the span such that the wait and init time is included. Adjust the end time of the
-						// span such that it is equal to the end time received from the OpenWhisk API.
-						span.SetStartTime(pdata.TimestampUnixNano(executionStartNano - waitTimeNano - initTimeNano))
-						span.SetEndTime(pdata.TimestampUnixNano(executionEndNano))
+						// Adjust the length of the span such that the wait time is included. It is not necessary to include the init time,
+						// since in case of a cold start `activation.Start` already represents the beginning of the initialization (see
+						// https://github.com/apache/openwhisk/pull/3053/files#diff-6fc7cf52c2b1c79b38872811622b3a816cbc4106329d690a79c13295672326afR348).
+						// Also, adjust the end time of the span such that it is equal to the end time received from the OpenWhisk API.
+						span.SetStartTime(pdata.TimestampUnixNano(initExecStartNano - waitTimeNano))
+						span.SetEndTime(pdata.TimestampUnixNano(execEndNano))
 						// Add waitTime and initTime attributes if present.
 						if waitTime != nil {
-							waitTimeMilli := waitTimeNano / 1e6
 							span.Attributes().InsertInt("waitTimeMilli", waitTimeMilli)
 						}
 						if initTime != nil {
-							initTimeMilli := initTimeNano / 1e6
 							span.Attributes().InsertInt("initTimeMilli", initTimeMilli)
 						}
 					} else {
