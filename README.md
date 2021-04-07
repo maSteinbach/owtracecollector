@@ -29,6 +29,7 @@ docker build -t koelschkellerkind/owtracecollector:tag .
 * 1.0.1 refactoring: owtracecollector is separated in owspanprocessor and owspanattacher (24th March 2021)
 * 1.0.2 changed unit of wait and initTime attributes to milliseconds (29th March 2021)
 * 1.0.3 renamed child spans of attacher (31st March 2021)
+* 1.0.4 bugfix: `start` from OpenWhisk activation record represents beginning of initialization (7th April 2021)
 
 ---
 
